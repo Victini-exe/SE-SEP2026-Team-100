@@ -1,0 +1,1870 @@
+openapi: 3.1.0
+info:
+  title: IITM Mentoring Platform
+  description: IITM BS mentoring platform API. Protected endpoints require a bearer
+    token. Request expiry is evaluated when request lists, decisions, or new requests
+    are processed. Suspension blocks protected actions and pauses active relationships;
+    reactivation resumes a relationship only when the other participant is not suspended.
+  version: 0.2.0
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+      - auth
+      summary: Register User
+      operationId: register_user_api_v1_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/login:
+    post:
+      tags:
+      - auth
+      summary: Login
+      operationId: login_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/login-form:
+    post:
+      tags:
+      - auth
+      summary: Login Form
+      operationId: login_form_api_v1_auth_login_form_post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_login_form_api_v1_auth_login_form_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/me:
+    get:
+      tags:
+      - auth
+      summary: Get Me
+      operationId: get_me_api_v1_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - auth
+      summary: Logout
+      operationId: logout_api_v1_auth_logout_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/students/me/profile:
+    get:
+      tags:
+      - students
+      summary: Get Student Profile
+      operationId: get_student_profile_api_v1_students_me_profile_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentProfileRead'
+      security:
+      - OAuth2PasswordBearer: []
+    put:
+      tags:
+      - students
+      summary: Update Student Profile
+      operationId: update_student_profile_api_v1_students_me_profile_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentProfileCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentProfileRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/students/questions:
+    get:
+      tags:
+      - students
+      summary: List Career Questions
+      operationId: list_career_questions_api_v1_students_questions_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CareerQuestionRead'
+                type: array
+                title: Response List Career Questions Api V1 Students Questions Get
+      security:
+      - OAuth2PasswordBearer: []
+    post:
+      tags:
+      - students
+      summary: Create Career Question
+      operationId: create_career_question_api_v1_students_questions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CareerQuestionCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CareerQuestionRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/mentors/apply:
+    post:
+      tags:
+      - mentors
+      summary: Apply As Mentor
+      operationId: apply_as_mentor_api_v1_mentors_apply_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MentorApplicationCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorApplicationRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/mentors/me/profile:
+    get:
+      tags:
+      - mentors
+      summary: Get Mentor Profile
+      operationId: get_mentor_profile_api_v1_mentors_me_profile_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorProfileRead'
+      security:
+      - OAuth2PasswordBearer: []
+    put:
+      tags:
+      - mentors
+      summary: Update Mentor Profile
+      operationId: update_mentor_profile_api_v1_mentors_me_profile_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MentorProfileCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorProfileRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/mentors/search:
+    get:
+      tags:
+      - mentors
+      summary: Search Mentors
+      operationId: search_mentors_api_v1_mentors_search_get
+      parameters:
+      - name: query
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Query
+      - name: domain
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Domain
+      - name: guidance_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Guidance Type
+      - name: industry
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Industry
+      - name: graduation_year
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Graduation Year
+      - name: language
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Language
+      - name: experience_level
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Experience Level
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 10
+          title: Page Size
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/mentors/{mentor_id}:
+    get:
+      tags:
+      - mentors
+      summary: Get Public Mentor Profile
+      operationId: get_public_mentor_profile_api_v1_mentors__mentor_id__get
+      parameters:
+      - name: mentor_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Mentor Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/dashboard:
+    get:
+      tags:
+      - admin
+      summary: Admin Dashboard
+      operationId: admin_dashboard_api_v1_admin_dashboard_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/users:
+    get:
+      tags:
+      - admin
+      summary: List Users
+      operationId: list_users_api_v1_admin_users_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 1
+          title: Page
+      - name: page_size
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Page Size
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/applications:
+    get:
+      tags:
+      - admin
+      summary: List Applications
+      operationId: list_applications_api_v1_admin_applications_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/MentorApplicationRead'
+                type: array
+                title: Response List Applications Api V1 Admin Applications Get
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/admin/applications/{application_id}/review:
+    post:
+      tags:
+      - admin
+      summary: Review Application
+      operationId: review_application_api_v1_admin_applications__application_id__review_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: application_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Application Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MentorApplicationReview'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/matching/recommendations:
+    get:
+      tags:
+      - matching
+      summary: Recommend Mentors
+      operationId: recommend_mentors_api_v1_matching_recommendations_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/requests:
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: List Requests
+      operationId: list_requests_api_v1_requests_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+      x-user-stories: &id001
+      - T100-18
+      - T100-19
+      - T100-22
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Create Request
+      operationId: create_request_api_v1_requests_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MentoringRequestCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+      x-user-stories: *id001
+  /api/v1/requests/{request_id}/decision:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Decide Request
+      operationId: decide_request_api_v1_requests__request_id__decision_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: request_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Request Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MentoringDecision'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - T100-19
+  /api/v1/requests/{request_id}/withdraw:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Withdraw Request
+      operationId: withdraw_request_api_v1_requests__request_id__withdraw_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: request_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Request Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - T100-22
+  /api/v1/relationships:
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: List Relationships
+      operationId: list_relationships_api_v1_relationships_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+      x-user-stories:
+      - T100-20
+      - T100-21
+      - T100-23
+  /api/v1/relationships/{relationship_id}/close:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Close Relationship
+      operationId: close_relationship_api_v1_relationships__relationship_id__close_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: relationship_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Relationship Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RelationshipClose'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - T100-23
+  /api/v1/relationships/{relationship_id}/sessions:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Propose Session
+      operationId: propose_session_api_v1_relationships__relationship_id__sessions_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: relationship_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Relationship Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionProposal'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories: &id002
+      - T100-24
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: List Sessions
+      operationId: list_sessions_api_v1_relationships__relationship_id__sessions_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: relationship_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Relationship Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories: *id002
+  /api/v1/sessions/{session_id}/decision:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Decide Session
+      operationId: decide_session_api_v1_sessions__session_id__decision_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionDecision'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - T100-24
+  /api/v1/relationships/{relationship_id}/messages:
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: List Messages
+      operationId: list_messages_api_v1_relationships__relationship_id__messages_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: relationship_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Relationship Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories: &id003
+      - T100-25
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Send Message
+      operationId: send_message_api_v1_relationships__relationship_id__messages_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: relationship_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Relationship Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories: *id003
+  /api/v1/sessions/{session_id}/notes:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Add Session Note
+      operationId: add_session_note_api_v1_sessions__session_id__notes_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionNoteCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories: &id004
+      - T100-26
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: List Session Notes
+      operationId: list_session_notes_api_v1_sessions__session_id__notes_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories: *id004
+  /api/v1/reports:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Create Report
+      operationId: create_report_api_v1_reports_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+      x-user-stories:
+      - T100-27
+  /api/v1/admin/reports:
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: List Reports
+      operationId: list_reports_api_v1_admin_reports_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+      x-user-stories:
+      - T100-27
+  /api/v1/admin/reports/{report_id}/review:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Review Report
+      operationId: review_report_api_v1_admin_reports__report_id__review_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: report_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Report Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportReview'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - T100-27
+  /api/v1/admin/users/{user_id}/suspend:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Suspend User
+      operationId: suspend_user_api_v1_admin_users__user_id__suspend_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountStatusChange'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - T100-28
+  /api/v1/admin/users/{user_id}/reactivate:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Reactivate User
+      operationId: reactivate_user_api_v1_admin_users__user_id__reactivate_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountStatusChange'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - T100-28
+  /api/v1/admin/alerts:
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: Admin Alerts
+      operationId: admin_alerts_api_v1_admin_alerts_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+      x-user-stories:
+      - US-22
+  /api/v1/admin/analytics:
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: Admin Analytics
+      operationId: admin_analytics_api_v1_admin_analytics_get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: start
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Start
+      - name: end
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: End
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - US-21
+  /api/v1/notifications:
+    get:
+      tags:
+      - mentoring lifecycle
+      summary: List Notifications
+      operationId: list_notifications_api_v1_notifications_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - OAuth2PasswordBearer: []
+      x-user-stories:
+      - Milestone 1 notifications
+  /api/v1/notifications/{notification_id}/read:
+    post:
+      tags:
+      - mentoring lifecycle
+      summary: Mark Notification Read
+      operationId: mark_notification_read_api_v1_notifications__notification_id__read_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: notification_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Notification Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      x-user-stories:
+      - Milestone 1 notifications
+  /health:
+    get:
+      summary: Health Check
+      operationId: health_check_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    AccountStatusChange:
+      properties:
+        reason:
+          type: string
+          maxLength: 2000
+          minLength: 10
+          title: Reason
+      type: object
+      required:
+      - reason
+      title: AccountStatusChange
+    Body_login_form_api_v1_auth_login_form_post:
+      properties:
+        grant_type:
+          anyOf:
+          - type: string
+            pattern: password
+          - type: 'null'
+          title: Grant Type
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          title: Password
+        scope:
+          type: string
+          title: Scope
+          default: ''
+        client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Secret
+      type: object
+      required:
+      - username
+      - password
+      title: Body_login_form_api_v1_auth_login_form_post
+    CareerQuestionCreate:
+      properties:
+        question_text:
+          type: string
+          maxLength: 500
+          minLength: 50
+          title: Question Text
+      type: object
+      required:
+      - question_text
+      title: CareerQuestionCreate
+    CareerQuestionRead:
+      properties:
+        question_text:
+          type: string
+          maxLength: 500
+          minLength: 50
+          title: Question Text
+        id:
+          type: integer
+          title: Id
+        created_at:
+          type: string
+          title: Created At
+      type: object
+      required:
+      - question_text
+      - id
+      - created_at
+      title: CareerQuestionRead
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    MentorApplicationCreate:
+      properties:
+        roll_number:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Roll Number
+        graduation_year:
+          anyOf:
+          - type: integer
+            maximum: 2100.0
+            minimum: 1950.0
+          - type: 'null'
+          title: Graduation Year
+        linked_in_url:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Linked In Url
+        additional_verification_info:
+          anyOf:
+          - type: string
+            maxLength: 4000
+          - type: 'null'
+          title: Additional Verification Info
+      type: object
+      title: MentorApplicationCreate
+    MentorApplicationRead:
+      properties:
+        roll_number:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Roll Number
+        graduation_year:
+          anyOf:
+          - type: integer
+            maximum: 2100.0
+            minimum: 1950.0
+          - type: 'null'
+          title: Graduation Year
+        linked_in_url:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Linked In Url
+        additional_verification_info:
+          anyOf:
+          - type: string
+            maxLength: 4000
+          - type: 'null'
+          title: Additional Verification Info
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        status:
+          type: string
+          title: Status
+        admin_decision:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Admin Decision
+        rejection_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Rejection Reason
+        submitted_at:
+          type: string
+          title: Submitted At
+        decision_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Decision At
+      type: object
+      required:
+      - id
+      - user_id
+      - status
+      - submitted_at
+      title: MentorApplicationRead
+    MentorApplicationReview:
+      properties:
+        action:
+          type: string
+          pattern: ^(approve|reject)$
+          title: Action
+        rejection_reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Rejection Reason
+      type: object
+      required:
+      - action
+      title: MentorApplicationReview
+    MentorProfileCreate:
+      properties:
+        career_history:
+          anyOf:
+          - type: string
+            maxLength: 4000
+          - type: 'null'
+          title: Career History
+        organisations:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Organisations
+        roles:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Roles
+        years_of_experience:
+          type: integer
+          minimum: 0.0
+          title: Years Of Experience
+          default: 0
+        graduation_year:
+          anyOf:
+          - type: integer
+            maximum: 2100.0
+            minimum: 1950.0
+          - type: 'null'
+          title: Graduation Year
+        experience_level:
+          type: string
+          title: Experience Level
+          default: Recent Graduate
+        guidance_types:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Guidance Types
+        preferred_languages:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Preferred Languages
+        max_mentee_capacity:
+          type: integer
+          maximum: 5.0
+          minimum: 1.0
+          title: Max Mentee Capacity
+          default: 1
+        availability:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Availability
+        pause_status:
+          type: string
+          title: Pause Status
+          default: active
+        expertise_area_ids:
+          items:
+            type: integer
+          type: array
+          title: Expertise Area Ids
+      type: object
+      title: MentorProfileCreate
+    MentorProfileRead:
+      properties:
+        career_history:
+          anyOf:
+          - type: string
+            maxLength: 4000
+          - type: 'null'
+          title: Career History
+        organisations:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Organisations
+        roles:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Roles
+        years_of_experience:
+          type: integer
+          minimum: 0.0
+          title: Years Of Experience
+          default: 0
+        graduation_year:
+          anyOf:
+          - type: integer
+            maximum: 2100.0
+            minimum: 1950.0
+          - type: 'null'
+          title: Graduation Year
+        experience_level:
+          type: string
+          title: Experience Level
+          default: Recent Graduate
+        guidance_types:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Guidance Types
+        preferred_languages:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Preferred Languages
+        max_mentee_capacity:
+          type: integer
+          maximum: 5.0
+          minimum: 1.0
+          title: Max Mentee Capacity
+          default: 1
+        availability:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Availability
+        pause_status:
+          type: string
+          title: Pause Status
+          default: active
+        expertise_area_ids:
+          items:
+            type: integer
+          type: array
+          title: Expertise Area Ids
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+        status:
+          type: string
+          title: Status
+        current_mentee_count:
+          type: integer
+          title: Current Mentee Count
+          default: 0
+      type: object
+      required:
+      - id
+      - user_id
+      - status
+      title: MentorProfileRead
+    MentoringDecision:
+      properties:
+        action:
+          type: string
+          enum:
+          - accept
+          - decline
+          title: Action
+        decline_reason:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Decline Reason
+      type: object
+      required:
+      - action
+      title: MentoringDecision
+    MentoringRequestCreate:
+      properties:
+        mentor_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Mentor Id
+        personal_message:
+          type: string
+          maxLength: 1000
+          minLength: 100
+          title: Personal Message
+        career_question_id:
+          anyOf:
+          - type: integer
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Career Question Id
+      type: object
+      required:
+      - mentor_id
+      - personal_message
+      title: MentoringRequestCreate
+    MessageCreate:
+      properties:
+        content:
+          type: string
+          maxLength: 2000
+          minLength: 1
+          title: Content
+      type: object
+      required:
+      - content
+      title: MessageCreate
+    RelationshipClose:
+      properties:
+        reason:
+          type: string
+          enum:
+          - GOAL_ACHIEVED
+          - NO_LONGER_NEEDED
+          - NOT_A_GOOD_FIT
+          - OTHER
+          title: Reason
+        explanation:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Explanation
+      type: object
+      required:
+      - reason
+      title: RelationshipClose
+    ReportCreate:
+      properties:
+        target_user_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Target User Id
+        category:
+          type: string
+          enum:
+          - HARASSMENT
+          - INAPPROPRIATE_BEHAVIOUR
+          - SPAM
+          - MISREPRESENTATION
+          - OTHER
+          title: Category
+        description:
+          type: string
+          maxLength: 4000
+          minLength: 20
+          title: Description
+      type: object
+      required:
+      - target_user_id
+      - category
+      - description
+      title: ReportCreate
+    ReportReview:
+      properties:
+        status:
+          type: string
+          enum:
+          - under_review
+          - resolved
+          - dismissed
+          title: Status
+        admin_review_notes:
+          type: string
+          maxLength: 4000
+          minLength: 5
+          title: Admin Review Notes
+      type: object
+      required:
+      - status
+      - admin_review_notes
+      title: ReportReview
+    SessionDecision:
+      properties:
+        action:
+          type: string
+          enum:
+          - confirm
+          - unavailable
+          - cancel
+          - complete
+          title: Action
+      type: object
+      required:
+      - action
+      title: SessionDecision
+    SessionNoteCreate:
+      properties:
+        notes:
+          type: string
+          maxLength: 10000
+          minLength: 1
+          title: Notes
+        action_items:
+          anyOf:
+          - type: string
+            maxLength: 5000
+          - type: 'null'
+          title: Action Items
+        due_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Due At
+      type: object
+      required:
+      - notes
+      title: SessionNoteCreate
+    SessionProposal:
+      properties:
+        scheduled_for:
+          type: string
+          format: date-time
+          title: Scheduled For
+        timezone:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Timezone
+        meeting_link:
+          anyOf:
+          - type: string
+            maxLength: 500
+          - type: 'null'
+          title: Meeting Link
+      type: object
+      required:
+      - scheduled_for
+      - timezone
+      title: SessionProposal
+    StudentProfileCreate:
+      properties:
+        career_goal:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Career Goal
+        current_situation:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Current Situation
+        preferred_language:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Preferred Language
+        weekly_availability:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Weekly Availability
+        career_aspirations:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Career Aspirations
+        interest_area_ids:
+          items:
+            type: integer
+          type: array
+          title: Interest Area Ids
+      type: object
+      title: StudentProfileCreate
+    StudentProfileRead:
+      properties:
+        career_goal:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Career Goal
+        current_situation:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Current Situation
+        preferred_language:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Preferred Language
+        weekly_availability:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Weekly Availability
+        career_aspirations:
+          anyOf:
+          - type: string
+            maxLength: 2000
+          - type: 'null'
+          title: Career Aspirations
+        interest_area_ids:
+          items:
+            type: integer
+          type: array
+          title: Interest Area Ids
+        id:
+          type: integer
+          title: Id
+        user_id:
+          type: integer
+          title: User Id
+      type: object
+      required:
+      - id
+      - user_id
+      title: StudentProfileRead
+    TokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+      type: object
+      required:
+      - access_token
+      title: TokenResponse
+    UserLoginRequest:
+      properties:
+        institute_email:
+          type: string
+          format: email
+          title: Institute Email
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+      - institute_email
+      - password
+      title: UserLoginRequest
+    UserRegisterRequest:
+      properties:
+        name:
+          type: string
+          maxLength: 150
+          minLength: 2
+          title: Name
+        institute_email:
+          type: string
+          format: email
+          title: Institute Email
+        password:
+          type: string
+          maxLength: 128
+          minLength: 8
+          title: Password
+        role:
+          type: string
+          title: Role
+          default: student
+      type: object
+      required:
+      - name
+      - institute_email
+      - password
+      title: UserRegisterRequest
+    UserSummary:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        institute_email:
+          type: string
+          title: Institute Email
+        role:
+          type: string
+          title: Role
+        account_status:
+          type: string
+          title: Account Status
+      type: object
+      required:
+      - id
+      - name
+      - institute_email
+      - role
+      - account_status
+      title: UserSummary
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/v1/auth/login
+tags:
+- name: auth
+  description: Registration, login, and authenticated identity.
+- name: students
+  description: Student profile and career-question operations.
+- name: mentors
+  description: Mentor applications, profiles, discovery, and search.
+- name: admin
+  description: Mentor application review and user listing.
+- name: matching
+  description: Explainable mentor recommendations.
+- name: mentoring lifecycle
+  description: Requests, relationships, sessions, messages, notes, reports, analytics,
+    and notifications.

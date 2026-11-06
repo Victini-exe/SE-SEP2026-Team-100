@@ -1,0 +1,23 @@
+gantt
+    title Editable relative schedule — shift the Week 1 anchor as needed
+    dateFormat  YYYY-MM-DD
+    axisFormat  %d %b
+    tickInterval 1week
+    %% 2026-11-06 is a planning anchor for this draft, not an agreed team deadline.
+    section Milestone 2 — Scheduling and Design
+    Scope and requirements             :design, 2026-11-06, 7d
+    Component, API and data design     :architecture, after design, 7d
+    section Sprint 1 — API Development
+    Database and migrations            :database, after architecture, 7d
+    Authentication and role controls   :auth, after architecture, 7d
+    Backend lifecycle APIs             :backend, after database, 14d
+    Frontend workspace implementation  :frontend, after auth, 14d
+    Student workflows                 :student, after frontend, 7d
+    Mentor workflows                  :mentor, after student, 7d
+    Admin workflows                   :admin, after backend, 7d
+    section Sprint 2 — Testing, Integration and User Feedback
+    Frontend-backend integration       :integration, after backend, 7d
+    Automated and manual testing       :testing, after integration, 7d
+    User feedback and fixes            :feedback, after testing, 7d
+    Documentation and evidence         :docs, after architecture, 21d
+    Submission review                  :submission, after feedback, 3d
