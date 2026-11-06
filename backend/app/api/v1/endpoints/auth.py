@@ -75,15 +75,16 @@ def register_user(payload: UserRegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email is required")
 
     email = str(payload.institute_email).lower()
-    if not any(email.endswith(domain.strip().lower()) for domain in settings.allowed_domains):
+    email_domain = email.rpartition("@")[2]
+    if email_domain not in settings.allowed_domains:
         raise HTTPException(status_code=400, detail="Institute email domain not allowed")
 
     if get_user_by_email(db, email):
         raise HTTPException(status_code=400, detail="User already exists")
 
     role = payload.role.lower()
-    if role not in {"student", "mentor", "admin"}:
-        raise HTTPException(status_code=400, detail="Invalid role")
+    if role not in {"student", "mentor"}:
+        raise HTTPException(status_code=400, detail="Only student and mentor registration is available")
 
     user = User(
         name=payload.name,

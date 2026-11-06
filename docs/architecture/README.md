@@ -1,43 +1,15 @@
 # Architecture overview
 
-## System goals
+The platform is a single deployable React SPA and FastAPI modular monolith backed by SQLAlchemy and a relational database. SQLite is the local default; database schema evolution is managed by Alembic.
 
-The mentoring platform is designed as a modular monolith so that the core domain remains easy to extend while still keeping deployment and operations straightforward for a student-facing platform.
+See [component-design.md](./component-design.md) for runtime modules and trust boundaries, [class-diagram.mmd](../diagrams/class-diagram.mmd) for domain relationships, and [database-er-diagram.mmd](../diagrams/database-er-diagram.mmd) for the relational schema.
 
-## Core components
+## Important decisions and limits
 
-### Frontend
-
-The frontend is a React + TypeScript single-page application served by Vite. It exposes the main screens for landing, login, registration, and role-based user experiences.
-
-### Backend
-
-The backend is a FastAPI application built around a modular routing structure. The `api/v1` router groups auth, student, mentor, admin, and matching flows into a single operational API surface.
-
-### Data layer
-
-The application uses SQLAlchemy models with SQLite by default for local development. Entity relationships model users, profiles, specialty interests, mentoring requests, and notification data.
-
-### Matching engine
-
-Mentor recommendations are calculated using a scoring function that considers:
-- career goal alignment
-- interest overlap
-- language preference
-- experience level
-- mentor capacity and status
-
-## Deployment assumptions
-
-The platform is designed for a simple local stack first, with a clear path to future production upgrades:
-- move from SQLite to PostgreSQL
-- add background task queues and notifications
-- add richer admin review and session workflows
-- expose deployment through Docker or cloud infrastructure
-
-## Key architectural decisions
-
-- Use a single codebase to keep domain logic and data contracts cohesive
-- Keep route modules grouped by persona and business capability
-- Centralize JWT and password logic in `auth` utilities
-- Keep profile and mentoring logic in dedicated service and schema layers
+- Role and record authorization are enforced in the API, not only in the UI.
+- Request acceptance rechecks mentor capacity and uses row locks where the database supports them. SQLite does not provide equivalent `FOR UPDATE` concurrency guarantees.
+- Session instants are stored in UTC. IANA timezone data is included for Windows/local runtime conversions.
+- Admin actions create audit rows. Normal admin APIs do not expose private message content or session notes.
+- Account suspension pauses active relationships without deleting history. Reactivation resumes a relationship only when the other participant is not suspended.
+- Seven-day request expiration is lazy and occurs when relevant lifecycle routes are used; a scheduled worker is not configured.
+- The default development JWT secret is unsafe for deployment. Configure a private secret and deployment settings before hosting.

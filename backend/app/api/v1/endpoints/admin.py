@@ -16,8 +16,36 @@ def admin_dashboard(current_user: User = Depends(get_current_user), db: Session 
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     pending_count = db.query(MentorApplication).filter(MentorApplication.status == "pending").count()
-    approved_count = db.query(MentorProfile).filter(MentorProfile.status == "approved").count()
+    approved_count = db.query(MentorProfile).join(User, User.id == MentorProfile.user_id).filter(
+        MentorProfile.status == "approved",
+        User.account_status == "active",
+    ).count()
     return {"pending_applications": pending_count, "approved_mentors": approved_count, "recent_activity": []}
+
+
+@router.get("/users")
+def list_users(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    page: int = 1,
+    page_size: int = 50,
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 100)
+    query = db.query(User).order_by(User.created_at.desc())
+    total = query.count()
+    users = query.offset((page - 1) * page_size).limit(page_size).all()
+    return {
+        "items": [
+            {"id": user.id, "name": user.name, "role": user.role, "account_status": user.account_status}
+            for user in users
+        ],
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+    }
 
 
 @router.get("/applications", response_model=list[MentorApplicationRead])
@@ -60,6 +88,7 @@ def review_application(application_id: int, payload: MentorApplicationReview, cu
     else:
         application.status = "approved"
         application.admin_decision = "approved"
+        application.user.account_status = "active"
         profile = db.query(MentorProfile).filter(MentorProfile.user_id == application.user_id).first()
         if not profile:
             profile = MentorProfile(user_id=application.user_id)

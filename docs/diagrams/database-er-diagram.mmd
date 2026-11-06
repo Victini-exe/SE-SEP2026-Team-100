@@ -1,0 +1,163 @@
+erDiagram
+    USERS {
+      int id PK
+      string institute_email UK
+      string password_hash
+      string name
+      string role
+      string account_status
+      string suspended_from_status
+    }
+    STUDENT_PROFILES {
+      int id PK
+      int user_id FK,UK
+      text career_goal
+      text current_situation
+      string preferred_language
+    }
+    MENTOR_PROFILES {
+      int id PK
+      int user_id FK,UK
+      text career_history
+      int max_mentee_capacity
+      string pause_status
+      string status
+    }
+    MENTOR_APPLICATIONS {
+      int id PK
+      int user_id FK,UK
+      string status
+      datetime submitted_at
+      datetime decision_at
+    }
+    CAREER_QUESTIONS {
+      int id PK
+      int user_id FK
+      text question_text
+      datetime created_at
+    }
+    MENTORING_REQUESTS {
+      int id PK
+      int student_id FK
+      int mentor_id FK
+      int career_question_id FK
+      text personal_message
+      text decline_reason
+      string status
+      datetime created_at
+      datetime decision_at
+      datetime withdrawn_at
+    }
+    MENTORING_RELATIONSHIPS {
+      int id PK
+      int student_id FK
+      int mentor_id FK
+      int closed_by_id FK
+      string status
+      string closure_reason
+      datetime started_at
+      datetime ended_at
+      datetime last_activity_at
+    }
+    SESSIONS {
+      int id PK
+      int mentoring_relationship_id FK
+      int proposer_id FK
+      datetime scheduled_for
+      string proposer_timezone
+      string meeting_link
+      string status
+    }
+    MESSAGES {
+      int id PK
+      int mentoring_relationship_id FK
+      int session_id FK
+      int sender_id FK
+      int recipient_id FK
+      text content
+      boolean is_read
+      datetime created_at
+    }
+    SESSION_NOTES {
+      int id PK
+      int session_id FK
+      int author_id FK
+      text notes
+      text action_items
+      datetime due_at
+      boolean submitted_late
+      datetime created_at
+      datetime updated_at
+    }
+    REPORTS {
+      int id PK
+      int reporter_id FK
+      int target_user_id FK
+      int reviewed_by_id FK
+      string category
+      text reason
+      string status
+      text admin_review_notes
+      datetime decision_at
+    }
+    AUDIT_LOGS {
+      int id PK
+      int user_id FK
+      string action
+      string entity_type
+      int entity_id
+      text details
+      datetime created_at
+    }
+    NOTIFICATIONS {
+      int id PK
+      int user_id FK
+      string notification_type
+      int entity_id
+      text message
+      boolean is_read
+      datetime created_at
+    }
+    INTEREST_AREAS {
+      int id PK
+      string name UK
+      string category
+    }
+    STUDENT_INTERESTS {
+      int id PK
+      int student_profile_id FK
+      int interest_area_id FK
+    }
+    MENTOR_EXPERTISE {
+      int id PK
+      int mentor_profile_id FK
+      int interest_area_id FK
+    }
+
+    USERS ||--o| STUDENT_PROFILES : has
+    USERS ||--o| MENTOR_PROFILES : has
+    USERS ||--o{ MENTOR_APPLICATIONS : submits
+    USERS ||--o{ CAREER_QUESTIONS : asks
+    USERS ||--o{ MENTORING_REQUESTS : student
+    USERS ||--o{ MENTORING_REQUESTS : mentor
+    CAREER_QUESTIONS o|--o{ MENTORING_REQUESTS : context
+    USERS ||--o{ MENTORING_RELATIONSHIPS : student
+    USERS ||--o{ MENTORING_RELATIONSHIPS : mentor
+    USERS o|--o{ MENTORING_RELATIONSHIPS : closes
+    MENTORING_RELATIONSHIPS ||--o{ SESSIONS : schedules
+    USERS ||--o{ SESSIONS : proposes
+    MENTORING_RELATIONSHIPS ||--o{ MESSAGES : contains
+    SESSIONS o|--o{ MESSAGES : context
+    USERS ||--o{ MESSAGES : sends
+    USERS o|--o{ MESSAGES : receives
+    SESSIONS ||--o{ SESSION_NOTES : has
+    USERS ||--o{ SESSION_NOTES : authors
+    USERS ||--o{ REPORTS : reports
+    USERS ||--o{ REPORTS : reported
+    USERS o|--o{ REPORTS : reviews
+    USERS o|--o{ AUDIT_LOGS : acts
+    USERS ||--o{ NOTIFICATIONS : receives
+    STUDENT_PROFILES ||--o{ STUDENT_INTERESTS : selects
+    MENTOR_PROFILES ||--o{ MENTOR_EXPERTISE : lists
+    INTEREST_AREAS ||--o{ STUDENT_INTERESTS : categorizes
+    INTEREST_AREAS ||--o{ MENTOR_EXPERTISE : categorizes

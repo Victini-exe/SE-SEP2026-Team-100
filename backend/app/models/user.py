@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -18,6 +18,7 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     account_status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    suspended_from_status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -185,17 +186,30 @@ class MentoringRequest(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     student_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     mentor_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    personal_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    personal_message: Mapped[str] = mapped_column(Text, nullable=False)
+    career_question_id: Mapped[Optional[int]] = mapped_column(ForeignKey("career_questions.id", ondelete="SET NULL"), nullable=True)
+    decline_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     decision_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    withdrawn_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     student = relationship("User", foreign_keys="[MentoringRequest.student_id]", back_populates="student_mentoring_requests")
     mentor = relationship("User", foreign_keys="[MentoringRequest.mentor_id]", back_populates="mentor_mentoring_requests")
+    career_question = relationship("CareerQuestion")
 
     __table_args__ = (
-        CheckConstraint("status IN ('pending', 'accepted', 'rejected', 'expired')", name="ck_mentoring_request_status"),
-        UniqueConstraint("student_id", "mentor_id", "status", name="uq_student_mentor_request_active"),
+        CheckConstraint("status IN ('pending', 'accepted', 'rejected', 'withdrawn', 'expired')", name="ck_mentoring_request_status"),
+        Index(
+            "uq_pending_student_mentor_request",
+            "student_id",
+            "mentor_id",
+            unique=True,
+            sqlite_where=(status == "pending"),
+            postgresql_where=(status == "pending"),
+        ),
+        Index("ix_request_student_status_created", "student_id", "status", "created_at"),
+        Index("ix_request_mentor_status_created", "mentor_id", "status", "created_at"),
     )
 
 
@@ -208,9 +222,24 @@ class MentoringRelationship(Base):
     status: Mapped[str] = mapped_column(String(20), default="active")
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    closure_reason: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    closure_details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    closed_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     student = relationship("User", foreign_keys="[MentoringRelationship.student_id]", back_populates="student_mentoring_relationships")
     mentor = relationship("User", foreign_keys="[MentoringRelationship.mentor_id]", back_populates="mentor_mentoring_relationships")
+
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'closed', 'suspended')", name="ck_relationship_status"),
+        CheckConstraint(
+            "closure_reason IS NULL OR closure_reason IN ('GOAL_ACHIEVED', 'NO_LONGER_NEEDED', 'NOT_A_GOOD_FIT', 'OTHER')",
+            name="ck_relationship_closure_reason",
+        ),
+        Index("ix_relationship_student_status", "student_id", "status"),
+        Index("ix_relationship_mentor_status", "mentor_id", "status"),
+        Index("ix_relationship_activity", "status", "last_activity_at"),
+    )
 
 
 class Session(Base):
@@ -219,19 +248,34 @@ class Session(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     mentoring_relationship_id: Mapped[int] = mapped_column(ForeignKey("mentoring_relationships.id", ondelete="CASCADE"), nullable=False)
     scheduled_for: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    proposer_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    proposer_timezone: Mapped[str] = mapped_column(String(100), nullable=False, default="UTC")
     meeting_link: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="scheduled")
+    status: Mapped[str] = mapped_column(String(20), default="proposed")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        CheckConstraint("status IN ('proposed', 'confirmed', 'unavailable', 'completed', 'cancelled')", name="ck_session_status"),
+        Index("ix_sessions_relationship_time", "mentoring_relationship_id", "scheduled_for"),
+    )
 
 
 class Message(Base):
     __tablename__ = "messages"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False)
+    session_id: Mapped[Optional[int]] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), nullable=True)
+    mentoring_relationship_id: Mapped[Optional[int]] = mapped_column(ForeignKey("mentoring_relationships.id", ondelete="CASCADE"), nullable=True)
     sender_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    recipient_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        Index("ix_messages_relationship_created", "mentoring_relationship_id", "created_at"),
+    )
 
 
 class SessionNote(Base):
@@ -241,7 +285,11 @@ class SessionNote(Base):
     session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     notes: Mapped[str] = mapped_column(Text, nullable=False)
+    action_items: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    due_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    submitted_late: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class Report(Base):
@@ -251,8 +299,17 @@ class Report(Base):
     reporter_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     target_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     reason: Mapped[str] = mapped_column(Text, nullable=False)
+    category: Mapped[str] = mapped_column(String(40), nullable=False, default="other")
     status: Mapped[str] = mapped_column(String(20), default="open")
+    admin_review_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    reviewed_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    decision_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        CheckConstraint("status IN ('open', 'under_review', 'resolved', 'dismissed')", name="ck_report_status"),
+        Index("ix_reports_status_created", "status", "created_at"),
+    )
 
 
 class AuditLog(Base):
@@ -275,7 +332,13 @@ class Notification(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
+    notification_type: Mapped[str] = mapped_column(String(50), nullable=False, default="general")
+    entity_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="notifications")
+
+    __table_args__ = (
+        Index("ix_notifications_user_read_created", "user_id", "is_read", "created_at"),
+    )

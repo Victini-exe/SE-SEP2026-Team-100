@@ -1,0 +1,135 @@
+classDiagram
+    class User {
+      +int id
+      +string institute_email
+      +string role
+      +string account_status
+      +string suspended_from_status
+    }
+    class StudentProfile {
+      +int id
+      +int user_id
+      +string career_goal
+      +string current_situation
+      +string preferred_language
+    }
+    class MentorProfile {
+      +int id
+      +int user_id
+      +string career_history
+      +int max_mentee_capacity
+      +string pause_status
+      +string status
+    }
+    class MentorApplication {
+      +int id
+      +int user_id
+      +string status
+      +datetime submitted_at
+      +datetime decision_at
+    }
+    class CareerQuestion {
+      +int id
+      +int user_id
+      +string question_text
+      +datetime created_at
+    }
+    class MentoringRequest {
+      +int id
+      +int student_id
+      +int mentor_id
+      +int career_question_id
+      +string personal_message
+      +string status
+      +datetime decision_at
+      +datetime withdrawn_at
+    }
+    class MentoringRelationship {
+      +int id
+      +int student_id
+      +int mentor_id
+      +string status
+      +string closure_reason
+      +int closed_by_id
+      +datetime started_at
+      +datetime ended_at
+      +datetime last_activity_at
+    }
+    class Session {
+      +int id
+      +int mentoring_relationship_id
+      +int proposer_id
+      +datetime scheduled_for
+      +string proposer_timezone
+      +string status
+    }
+    class Message {
+      +int id
+      +int mentoring_relationship_id
+      +int session_id
+      +int sender_id
+      +int recipient_id
+      +string content
+      +bool is_read
+      +datetime created_at
+    }
+    class SessionNote {
+      +int id
+      +int session_id
+      +int author_id
+      +string notes
+      +string action_items
+      +datetime due_at
+      +bool submitted_late
+    }
+    class Report {
+      +int id
+      +int reporter_id
+      +int target_user_id
+      +string category
+      +string status
+      +string admin_review_notes
+    }
+    class AuditLog {
+      +int id
+      +int user_id
+      +string action
+      +string entity_type
+      +int entity_id
+      +string details
+      +datetime created_at
+    }
+    class Notification {
+      +int id
+      +int user_id
+      +string notification_type
+      +int entity_id
+      +bool is_read
+      +datetime created_at
+    }
+    class InterestArea
+    class StudentInterest
+    class MentorExpertise
+
+    User "1" --> "0..1" StudentProfile : student profile
+    User "1" --> "0..1" MentorProfile : mentor profile
+    User "1" --> "0..*" MentorApplication : submits
+    User "1" --> "0..*" CareerQuestion : asks
+    User "1" --> "0..*" MentoringRequest : requests as student
+    User "1" --> "0..*" MentoringRequest : receives as mentor
+    CareerQuestion "0..1" --> "0..*" MentoringRequest : context
+    User "1" --> "0..*" MentoringRelationship : student
+    User "1" --> "0..*" MentoringRelationship : mentor
+    MentoringRelationship "1" --> "0..*" Session : schedules
+    MentoringRelationship "1" --> "0..*" Message : conversation
+    Session "0..1" --> "0..*" Message : optional session context
+    Session "1" --> "0..*" SessionNote : records
+    User "1" --> "0..*" SessionNote : authors
+    User "1" --> "0..*" Report : reporter
+    User "1" --> "0..*" Report : reported
+    User "0..1" --> "0..*" AuditLog : administrator actor
+    User "1" --> "0..*" Notification : receives
+    StudentProfile "1" --> "0..*" StudentInterest : selects
+    MentorProfile "1" --> "0..*" MentorExpertise : lists
+    InterestArea "1" --> "0..*" StudentInterest : categorizes
+    InterestArea "1" --> "0..*" MentorExpertise : categorizes
