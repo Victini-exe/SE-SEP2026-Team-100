@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.v1.endpoints.auth import get_current_user
 from app.db.session import get_db
-from app.models import InterestArea, MentorApplication, MentorExpertise, MentorProfile, User
+from app.models import InterestArea, MentorApplication, MentorExpertise, MentorProfile, MentoringRelationship, User
 from app.schemas.mentor import MentorApplicationCreate, MentorApplicationRead, MentorApplicationReview, MentorProfileCreate, MentorProfileRead, MentorSearchRequest
 
 router = APIRouter()
@@ -49,6 +50,10 @@ def get_mentor_profile(current_user: User = Depends(get_current_user), db: Sessi
     profile = db.query(MentorProfile).filter(MentorProfile.user_id == current_user.id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Mentor profile not found")
+    current_count = db.query(MentoringRelationship).filter(
+        MentoringRelationship.mentor_id == current_user.id,
+        MentoringRelationship.status == "active",
+    ).count()
     return MentorProfileRead(
         id=profile.id,
         user_id=profile.user_id,
@@ -65,7 +70,7 @@ def get_mentor_profile(current_user: User = Depends(get_current_user), db: Sessi
         pause_status=profile.pause_status,
         status=profile.status,
         expertise_area_ids=[item.interest_area_id for item in profile.expertise],
-        current_mentee_count=0,
+        current_mentee_count=current_count,
     )
 
 
@@ -99,6 +104,10 @@ def update_mentor_profile(payload: MentorProfileCreate, current_user: User = Dep
 
     db.commit()
     db.refresh(profile)
+    current_count = db.query(MentoringRelationship).filter(
+        MentoringRelationship.mentor_id == current_user.id,
+        MentoringRelationship.status == "active",
+    ).count()
     return MentorProfileRead(
         id=profile.id,
         user_id=profile.user_id,
@@ -115,7 +124,7 @@ def update_mentor_profile(payload: MentorProfileCreate, current_user: User = Dep
         pause_status=profile.pause_status,
         status=profile.status,
         expertise_area_ids=[item.interest_area_id for item in profile.expertise],
-        current_mentee_count=0,
+        current_mentee_count=current_count,
     )
 
 
@@ -127,30 +136,50 @@ def search_mentors(
     industry: str | None = None,
     graduation_year: int | None = None,
     language: str | None = None,
+    experience_level: str | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
     db: Session = Depends(get_db),
 ):
-    base = db.query(MentorProfile).filter(MentorProfile.status == "approved", MentorProfile.pause_status == "active")
-    mentors = base.all()
-    items = []
-    for mentor in mentors:
-        user = db.query(User).filter(User.id == mentor.user_id).first()
-        if not user or user.account_status == "suspended":
-            continue
-        if query and query.lower() not in (user.name.lower() + " " + (mentor.roles or "")).lower():
-            continue
-        if domain and domain.lower() not in (mentor.organisations or "").lower():
-            continue
-        if guidance_type and guidance_type.lower() not in (mentor.guidance_types or "").lower():
-            continue
-        if industry and industry.lower() not in (mentor.organisations or "").lower():
-            continue
-        if graduation_year and mentor.graduation_year != graduation_year:
-            continue
-        if language and language.lower() not in (mentor.preferred_languages or "").lower():
-            continue
-        items.append({
+    active_counts = (
+        db.query(
+            MentoringRelationship.mentor_id.label("mentor_id"),
+            func.count(MentoringRelationship.id).label("active_count"),
+        )
+        .filter(MentoringRelationship.status == "active")
+        .group_by(MentoringRelationship.mentor_id)
+        .subquery()
+    )
+    base = (
+        db.query(MentorProfile, User, func.coalesce(active_counts.c.active_count, 0).label("active_count"))
+        .join(User, User.id == MentorProfile.user_id)
+        .outerjoin(active_counts, active_counts.c.mentor_id == MentorProfile.user_id)
+        .filter(
+            MentorProfile.status == "approved",
+            MentorProfile.pause_status == "active",
+            User.account_status == "active",
+            func.coalesce(active_counts.c.active_count, 0) < MentorProfile.max_mentee_capacity,
+        )
+    )
+    if query:
+        pattern = f"%{query}%"
+        base = base.filter(User.name.ilike(pattern) | MentorProfile.roles.ilike(pattern))
+    if domain:
+        base = base.filter(MentorProfile.organisations.ilike(f"%{domain}%"))
+    if guidance_type:
+        base = base.filter(MentorProfile.guidance_types.ilike(f"%{guidance_type}%"))
+    if industry:
+        base = base.filter(MentorProfile.organisations.ilike(f"%{industry}%"))
+    if graduation_year:
+        base = base.filter(MentorProfile.graduation_year == graduation_year)
+    if language:
+        base = base.filter(MentorProfile.preferred_languages.ilike(f"%{language}%"))
+    if experience_level:
+        base = base.filter(MentorProfile.experience_level == experience_level)
+    total = base.count()
+    rows = base.order_by(User.name).offset((page - 1) * page_size).limit(page_size).all()
+    items = [
+        {
             "id": mentor.id,
             "user_id": mentor.user_id,
             "name": user.name,
@@ -161,9 +190,11 @@ def search_mentors(
             "guidance_types": mentor.guidance_types,
             "status": mentor.status,
             "max_mentee_capacity": mentor.max_mentee_capacity,
-        })
-    start = (page - 1) * page_size
-    return {"items": items[start:start + page_size], "page": page, "page_size": page_size, "total": len(items)}
+            "current_mentee_count": active_count,
+        }
+        for mentor, user, active_count in rows
+    ]
+    return {"items": items, "page": page, "page_size": page_size, "total": total}
 
 
 @router.get("/{mentor_id}")

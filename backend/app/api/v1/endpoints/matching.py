@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.v1.endpoints.auth import get_current_user
 from app.db.session import get_db
-from app.models import MentorProfile, StudentProfile, User
+from app.models import MentorProfile, MentoringRelationship, StudentProfile, User
 from app.services.matching import calculate_match
 
 router = APIRouter()
@@ -13,17 +14,41 @@ router = APIRouter()
 def recommend_mentors(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Student access required")
-    student_profile = db.query(StudentProfile).filter(StudentProfile.user_id == current_user.id).first()
+    student_profile = db.query(StudentProfile).options(selectinload(StudentProfile.interests)).filter(
+        StudentProfile.user_id == current_user.id
+    ).first()
     if not student_profile:
         raise HTTPException(status_code=404, detail="Student profile not found")
 
-    mentor_profiles = db.query(MentorProfile).filter(MentorProfile.status == "approved", MentorProfile.pause_status == "active").all()
+    active_counts = (
+        db.query(
+            MentoringRelationship.mentor_id.label("mentor_id"),
+            func.count(MentoringRelationship.id).label("active_count"),
+        )
+        .filter(MentoringRelationship.status == "active")
+        .group_by(MentoringRelationship.mentor_id)
+        .subquery()
+    )
+    mentor_profiles = (
+        db.query(
+            MentorProfile,
+            User,
+            func.coalesce(active_counts.c.active_count, 0).label("active_count"),
+        )
+        .join(User, User.id == MentorProfile.user_id)
+        .outerjoin(active_counts, active_counts.c.mentor_id == MentorProfile.user_id)
+        .options(selectinload(MentorProfile.expertise))
+        .filter(
+            MentorProfile.status == "approved",
+            MentorProfile.pause_status == "active",
+            User.account_status == "active",
+            func.coalesce(active_counts.c.active_count, 0) < MentorProfile.max_mentee_capacity,
+        )
+        .all()
+    )
     recommendations = []
-    for mentor in mentor_profiles:
-        mentor_user = db.query(User).filter(User.id == mentor.user_id).first()
-        if not mentor_user or mentor_user.account_status == "suspended":
-            continue
-        score, reasons = calculate_match(student_profile, mentor)
+    for mentor, mentor_user, active_count in mentor_profiles:
+        score, reasons = calculate_match(student_profile, mentor, active_count)
         recommendations.append({
             "mentor_id": mentor.id,
             "mentor_name": mentor_user.name,

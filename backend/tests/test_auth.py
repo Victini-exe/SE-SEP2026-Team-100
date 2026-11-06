@@ -20,3 +20,19 @@ def test_unauthorized_access_to_admin(client):
 def test_registration_rejects_disallowed_domain(client):
     response = client.post("/api/v1/auth/register", json={"name": "Bad", "institute_email": "bad@gmail.com", "password": "password123", "role": "student"})
     assert response.status_code == 400
+
+
+def test_registration_rejects_domain_suffix_spoofing(client):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"name": "Bad", "institute_email": "bad@notstudy.iitm.ac.in", "password": "password123", "role": "student"},
+    )
+    assert response.status_code == 400
+
+
+def test_public_registration_cannot_create_admin(client):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"name": "Untrusted Admin", "institute_email": "attacker@study.iitm.ac.in", "password": "password123", "role": "admin"},
+    )
+    assert response.status_code == 400
