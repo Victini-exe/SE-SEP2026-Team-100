@@ -1,0 +1,13 @@
+flowchart LR
+    U[Student / Mentor / Admin] --> FE[React Frontend]
+    FE --> API[FastAPI API /api/v1]
+    API --> AUTH[Auth & JWT]
+    API --> STUD[Student Module]
+    API --> MENT[Mentor Module]
+    API --> ADMIN[Admin Module]
+    API --> MATCH[Matching Service]
+    MATCH --> DB[(SQLite Database)]
+    ADMIN --> DB
+    STUD --> DB
+    MENT --> DB
+    AUTH --> DB

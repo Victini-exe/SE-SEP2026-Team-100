@@ -1,0 +1,18 @@
+from app.models.user import (
+    AuditLog,
+    CareerQuestion,
+    InterestArea,
+    MentorApplication,
+    MentorExpertise,
+    MentorProfile,
+    MentoringRelationship,
+    MentoringRequest,
+    Message,
+    Notification,
+    Report,
+    Session,
+    SessionNote,
+    StudentInterest,
+    StudentProfile,
+    User,
+)

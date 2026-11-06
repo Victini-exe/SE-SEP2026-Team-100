@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+
+# FastAPI / Alembic
+backend/app.db
+backend/*.db
+backend/.sqlite3
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# build output
+build/
+dist/
